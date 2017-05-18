@@ -19,6 +19,22 @@ def __main():
     ax2Line, = ax2.plot(ax2X, ax2Y)
     ax3Line, = ax3.plot(ax3X, ax3Y)
 
+    # realtime plot
+    while True:
+        # update points
+        ax1X += 0.1
+        ax1Y += 0.01
+        ax2X += 0.1
+        ax2Y = 1
+        ax3X += 0.1
+        ax3Y = 1
+
+        # update line use poins
+        ax1Line.set_data(ax1X, ax1Y)
+        ax2Line.set_data(ax2X, ax2Y)
+        ax3Line.set_data(ax3X, ax3Y)
+
+        plt.pause(.01)
 
 
 if __name__ =='__main__':
