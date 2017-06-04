@@ -18,10 +18,7 @@ def __main():
     print(accList)
 
     # save file
-    wf = open(savePath, 'w')
-    wf.write(accList)
-    wf.close()
-
+    np.savetxt(savePath, accList, delimiter=",", fmt='%.0f')
 
 if __name__ =='__main__':
     __main()
