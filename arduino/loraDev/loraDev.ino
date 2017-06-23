@@ -14,15 +14,15 @@
  ** MOSI - pin 11
  ** MISO - pin 12
  ** CLK - pin 13
- ** CS - pin 4
-a
+ ** CS - pin 7
+ a
  *rtc module
 
  */
 
 #include <SPI.h>
 #include <SD.h>
-//#include <MsTimer2.h>
+#include <MsTimer2.h>
 #include <DS3232RTC.h>    //http://github.com/JChristensen/DS3232RTC
 #include <Time.h>
 #include <TimeLib.h>         //http://www.arduino.cc/playground/Code/Time
@@ -30,7 +30,7 @@ a
 
 // log file
 File logFile;
-String logFileName;
+String logFileName = "";
 
 // analog pin
 const int analogPin00 = A0;
@@ -38,7 +38,7 @@ const int analogPin01 = A1;
 const int analogPin02 = A2;
 
 // chip select pin (10:ss pin)
-const int chipSelectSD = 7;
+const int chipSelectSD = 4;
 const int chipSelect = 10;
 
 // variable for sensor
@@ -46,27 +46,99 @@ int xAxis = 0;
 int yAxis = 0;
 int zAxis = 0;
 
+// variable for time rep
+int secondsR = 0;
+int milliSecondsR= 0;
+
 // Interval of timer interrupt (ms)
-//const int interval = 20;
+const int interval = 2;
+
+// time for debug
+/*
+unsigned long nowMicroSec = 0;
+unsigned long preMicroSec = 0;  
+preMicroSec = micros();
+nowMicroSec = micros();
+Serial.println(nowMicroSec - preMicroSec);
+*/
+
+void timerInterrupt() {
+    // read sensor val
+    xAxis = analogRead(analogPin00);
+    yAxis = analogRead(analogPin01);
+    zAxis = analogRead(analogPin02);
+
+    //check time
+    if(secondsR != int(second())){
+      milliSecondsR = 0;
+      //Serial.print("*");
+    }
+
+    if(!logFile){
+      Serial.println("missing open file");
+    }
 
 /*
-   void timerInterrupt() {
-// read sensor val
-xAxis = analogRead(analogPin00);
-yAxis = analogRead(analogPin01);
-zAxis = analogRead(analogPin02);
+    // Serial
+    Serial.print(year());
+    Serial.print(",");
+    Serial.print(month());
+    Serial.print(",");
+    Serial.print(day());
+    Serial.print(",");
+    Serial.print(hour());
+    Serial.print(",");
+    Serial.print(minute());
+    Serial.print(",");
+    Serial.print(second());
+    Serial.print(",");
+    Serial.print(milliSecondsR);
+    Serial.print(":");
+    Serial.print(xAxis);
+    Serial.print(",");
+    Serial.print(yAxis);
+    Serial.print(",");
+    Serial.println(zAxis);
+    */
 
-// make a string for assembling the data to log
-//String dataString = String(xAxis + "," + yAxis + "," + zAxis);
-String dataString = String(xAxis);
+    // SD
+    logFile.print(year());
+    logFile.print(",");
+    logFile.print(month());
+    logFile.print(",");
+    logFile.print(day());
+    logFile.print(",");
+    logFile.print(hour());
+    logFile.print(",");
+    logFile.print(minute());
+    logFile.print(",");
+    logFile.print(second());
+    logFile.print(",");
+    logFile.print(milliSecondsR);
+    logFile.print(":");
+    logFile.print(xAxis);
+    logFile.print(",");
+    logFile.print(yAxis);
+    logFile.print(",");
+    logFile.println(zAxis);
 
-logFile.println(dataString);
-Serial.println(dataString);
+    logFile.flush();
+
+    //update time
+    milliSecondsR += interval;
+    secondsR = int(second());
+
+    
 }
- */
+
+String makeLogFileName() {
+  // 8.3 format
+  return String(month()) + "_" + String(day()) + "_" + String(hour()) + ".txt";
+  //return "test25.txt";
+}
 
 void setup() {
-    
+
     // Initialize Serial
     Serial.begin(9600);
 
@@ -80,20 +152,31 @@ void setup() {
     else
         Serial.println("RTC has set the system time");
 
+    // Set the number of seconds between re-syncs
+    //setSyncInterval(10);
+
+    // Initialize time for milliSeconds
+    milliSecondsR = 0;
+    secondsR = int(second());
+
     // Initialize SD card
-    if (!SD.begin(7)) {
-    Serial.println("Card failed, or not present");
-    //return;
+    if (!SD.begin(chipSelectSD)) {
+        Serial.println("Card failed, or not present");
+        //return;
     }else{
-      Serial.println("succes init sd");
+        Serial.println("succes init sd");
     }
 
     // open file / or create
-    //logFile = SD.open(logFileName, FILE_WRITE);
+    logFileName = makeLogFileName();
+    Serial.println(logFileName);
+    logFile = SD.open(logFileName, FILE_WRITE);
+    
 
     // setting msTimer2
-    //MsTimer2::set(interval, timerInterrupt);
-    //MsTimer2::start;
+    MsTimer2::set(interval, timerInterrupt);
+    MsTimer2::start();
+    Serial.println("mstimer2 start");
 }
 
 void loop() {
@@ -103,19 +186,4 @@ void loop() {
     //  xAxis = map(xAxis, 0, 675, 0, 255);
     //  yAxis = map(yAxis, 0, 675, 0, 255);
     //  zAxis = map(zAxis, 0, 675, 0, 255);
-
-    Serial.print(hour());
-    Serial.print(":");
-    Serial.print(minute());
-    Serial.print(":");
-    Serial.print(second());
-    Serial.print("-");
-    Serial.print(analogRead(analogPin00));
-    Serial.print(",");
-    Serial.print(analogRead(analogPin01));
-    Serial.print(",");
-    Serial.print(analogRead(analogPin02));
-    Serial.println();
-
-    delay(100);
 }
