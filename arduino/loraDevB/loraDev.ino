@@ -41,82 +41,93 @@ const int analogPin02 = A2;
 const int chipSelectSD = 4;
 const int chipSelect = 10;
 
-// variable for sensor
-int xAxis = 0;
-int yAxis = 0;
-int zAxis = 0;
-
 // variable for time rep
 int secondsR = 0;
 int milliSecondsR= 0;
 
-// variable for write SD counter
-volatile int sdCount = 0;
-const int sdWriteTime = 1000;
-
 // Interval of timer interrupt (ms)
 const int interval = 10;
 
-void timerInterrupt() {
-    // allow interrupt
-    interrupts();
-    
-    // read sensor val
-    xAxis = analogRead(analogPin00);
-    yAxis = analogRead(analogPin01);
-    zAxis = analogRead(analogPin02);
+// time for debug
+unsigned long nowMicroSec = 0;
+unsigned long preMicroSec = 0;
 
-    //check time
+// Write data
+typedef struct DATA {
+    int xAxis;
+    int yAxis;
+    int zAxis;
+    time_t tm;
+};
+
+// Buffer
+const int buffSize = 512;
+const int buffNum = 4;
+
+typedef struct BUFFER {
+    bool full;
+    DATA buf[buffSize];
+}
+
+volatile BUFFER ramBuffer[buffNum];
+volatile int activeBuffNo = 0;
+volatile int activeBuffCount = 0;
+int writeBuffNo = 0;
+
+void storeData(int xAxis, int yAxis, int zAxis, time_t tm) {
+    ramBuffer[activeBuffNo].buf[activeBuffCount] = { xAxis, yAxis, zAxis, tm};
+    activeBuffCount++;
+
+    // check buffer
+    if(activeBuffCount >= buffSize) {
+        ramBuffer[activeBuffNo].full = true;
+        // chanege next buffer
+        if(activeBuffNo != buffNum) {
+            activeBuffNo++;
+        }else{
+            activeBuffNo = 0;
+        }
+        activeBuffCount = 0;
+    }
+}
+
+void writeData(int buffNo, File file) {
+    for(int i = 0; i < buffSize; i++) {
+        file.print(hour(ramBuffer[buffNo].tm));
+        file.print(",");
+        file.print(minute(ramBuffer[buffNo].tm));
+        file.print(",");
+        file.print(second(ramBuffer[buffNo].tm));
+        file.print(",");
+        file.print(ramBuffer[buffNo].xAxis);
+        file.print(",");
+        file.print(ramBuffer[buffNo].yAxis);
+        file.print(",");
+        file.print(ramBuffer[buffNo].zAxis);
+    }
+
+    // physically saved to the SD card
+    flush();
+}
+
+void timerInterrupt() {
+    // check time
     if(secondsR != int(second())){
         milliSecondsR = 0;
         Serial.print("*");
     }
 
-    // SD
-    if(logFile){
-        logFile.print(hour());
-        logFile.print(",");
-        logFile.print(minute());
-        logFile.print(",");
-        logFile.print(second());
-        logFile.print(",");
-        logFile.print(milliSecondsR);
-        logFile.print(":");
-        logFile.print(xAxis);
-        logFile.print(",");
-        logFile.print(yAxis);
-        logFile.print(",");
-        logFile.println(zAxis);
-    }else{
-        Serial.println("missing open file");
-    }
+    // read sensor val
+    int xAxis = analogRead(analogPin00);
+    int yAxis = analogRead(analogPin01);
+    int zAxis = analogRead(analogPin02);
 
-
-    /*
-    // Serial
-    Serial.print(hour());
-    Serial.print(",");
-    Serial.print(minute());
-    Serial.print(",");
-    Serial.print(second());
-    Serial.print(",");
-    Serial.print(milliSecondsR);
-    Serial.print(":");
-    Serial.print(xAxis);
-    Serial.print(",");
-    Serial.print(yAxis);
-    Serial.print(",");
-    Serial.println(zAxis);
-     */
-
+    // store data to ram buffer
+    store(xAxis, yAxis, zAxis, now());
 
     //update time
     milliSecondsR += interval;
     secondsR = int(second());
-
-    //update write SD counter
-    sdCount += 1;
-
 }
 
 String makeLogFileName() {
@@ -173,20 +184,9 @@ void loop() {
     //  yAxis = map(yAxis, 0, 675, 0, 255);
     //  zAxis = map(zAxis, 0, 675, 0, 255);
 
-    // write data to SD
-    if (sdCount > sdWriteTime) {
-        MsTimer2::stop();
-        Serial.println();
-        logFile.println("*****************************");
-        Serial.println("Start");
-        Serial.print(hour());
-        Serial.print(",");
-        Serial.print(minute());
-        Serial.print(",");
-        Serial.println(second());
-        logFile.flush();
-        Serial.println("fin");
-        sdCount = 0;
-        MsTimer2::start();
+    // write data to SD from ramBuffer
+    if(ramBuffer[writeBuffNo].full) {
+        writeData(writeBuffNo, logFile);
+        ramBuffer[writeBuffNo].full = false;
     }
 }
