@@ -42,17 +42,13 @@ const int chipSelectSD = 4;
 const int chipSelect = 10;
 
 // variable for sensor
-int xAxis = 0;
-int yAxis = 0;
-int zAxis = 0;
-
-// variable for time rep
-int secondsR = 0;
-int milliSecondsR= 0;
+uint16_t xAxis = 0;
+uint16_t yAxis = 0;
+uint16_t zAxis = 0;
 
 // variable for write SD counter
 volatile int sdCount = 0;
-const int sdWriteTime = 1000;
+const int sdWriteTime = 6000;
 
 // Interval of timer interrupt (ms)
 const int interval = 10;
@@ -60,17 +56,11 @@ const int interval = 10;
 void timerInterrupt() {
     // allow interrupt
     interrupts();
-    
+
     // read sensor val
     xAxis = analogRead(analogPin00);
     yAxis = analogRead(analogPin01);
     zAxis = analogRead(analogPin02);
-
-    //check time
-    if(secondsR != int(second())){
-        milliSecondsR = 0;
-        Serial.print("*");
-    }
 
     // SD
     if(logFile){
@@ -80,8 +70,6 @@ void timerInterrupt() {
         logFile.print(",");
         logFile.print(second());
         logFile.print(",");
-        logFile.print(milliSecondsR);
-        logFile.print(":");
         logFile.print(xAxis);
         logFile.print(",");
         logFile.print(yAxis);
@@ -91,31 +79,11 @@ void timerInterrupt() {
         Serial.println("missing open file");
     }
 
-
-    /*
-    // Serial
-    Serial.print(hour());
-    Serial.print(",");
-    Serial.print(minute());
-    Serial.print(",");
-    Serial.print(second());
-    Serial.print(",");
-    Serial.print(milliSecondsR);
-    Serial.print(":");
-    Serial.print(xAxis);
-    Serial.print(",");
-    Serial.print(yAxis);
-    Serial.print(",");
-    Serial.println(zAxis);
-     */
-
-
-    //update time
-    milliSecondsR += interval;
-    secondsR = int(second());
-
     //update write SD counter
     sdCount += 1;
+    if(sdCount%1000 == 0) {
+        Serial.println(sdCount);
+    }
 
 }
 
@@ -141,10 +109,6 @@ void setup() {
 
     // Set the number of seconds between re-syncs
     //setSyncInterval(10);
-
-    // Initialize time for milliSeconds
-    milliSecondsR = 0;
-    secondsR = int(second());
 
     // Initialize SD card
     if (!SD.begin(chipSelectSD)) {
@@ -177,15 +141,29 @@ void loop() {
     if (sdCount > sdWriteTime) {
         MsTimer2::stop();
         Serial.println();
-        logFile.println("*****************************");
-        Serial.println("Start");
+        Serial.println("WriteStart");
         Serial.print(hour());
         Serial.print(",");
         Serial.print(minute());
         Serial.print(",");
         Serial.println(second());
-        logFile.flush();
-        Serial.println("fin");
+
+        if(logFileName.equals(makeLogFileName())) {
+            logFile.flush();
+        }else{
+            //reopen file every 1hours
+            logFileName = makeLogFileName();
+            Serial.println(logFileName);
+            logFile = SD.open(logFileName, FILE_WRITE);
+
+            // set system time using RTC
+            setSyncProvider(RTC.get);
+            if(timeStatus() != timeSet)
+                Serial.println("Unable to sync with the RTC");
+            else
+                Serial.println("RTC has set the system time");
+        }
+        Serial.println("WriteFin");
         sdCount = 0;
         MsTimer2::start();
     }

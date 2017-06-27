@@ -41,33 +41,25 @@ const int analogPin02 = A2;
 const int chipSelectSD = 4;
 const int chipSelect = 10;
 
-// variable for time rep
-int secondsR = 0;
-int milliSecondsR= 0;
-
 // Interval of timer interrupt (ms)
 const int interval = 10;
 
-// time for debug
-unsigned long nowMicroSec = 0;
-unsigned long preMicroSec = 0;
-
 // Write data
 typedef struct DATA {
-    int xAxis;
-    int yAxis;
-    int zAxis;
+    uint16_t xAxis;
+    uint16_t yAxis;
+    uint16_t zAxis;
     time_t tm;
 };
 
 // Buffer
-const int buffSize = 512;
-const int buffNum = 4;
+const uint8_t buffSize = 16;
+const uint8_t buffNum = 2;
 
 typedef struct BUFFER {
     bool full;
     DATA buf[buffSize];
-}
+};
 
 volatile BUFFER ramBuffer[buffNum];
 volatile int activeBuffNo = 0;
@@ -82,7 +74,7 @@ void storeData(int xAxis, int yAxis, int zAxis, time_t tm) {
     if(activeBuffCount >= buffSize) {
         ramBuffer[activeBuffNo].full = true;
         // chanege next buffer
-        if(activeBuffNo != buffNum) {
+        if(activeBuffNo != buffNum -1) {
             activeBuffNo++;
         }else{
             activeBuffNo = 0;
@@ -93,29 +85,24 @@ void storeData(int xAxis, int yAxis, int zAxis, time_t tm) {
 
 void writeData(int buffNo, File file) {
     for(int i = 0; i < buffSize; i++) {
-        file.print(hour(ramBuffer[buffNo].tm));
+        /*file.print(hour(ramBuffer[buffNo].buf[i].tm));
         file.print(",");
-        file.print(minute(ramBuffer[buffNo].tm));
+        file.print(minute(ramBuffer[buffNo].buf[i].tm));
         file.print(",");
-        file.print(second(ramBuffer[buffNo].tm));
+        file.print(second(ramBuffer[buffNo].buf[i].tm));
+        file.print(",");*/
+        file.print(ramBuffer[buffNo].buf[i].xAxis);
         file.print(",");
-        file.print(ramBuffer[buffNo].xAxis);
+        file.print(ramBuffer[buffNo].buf[i].yAxis);
         file.print(",");
-        file.print(ramBuffer[buffNo].yAxis);
-        file.print(",");
-        file.print(ramBuffer[buffNo].zAxis);
+        file.print(ramBuffer[buffNo].buf[i].zAxis);
     }
 
     // physically saved to the SD card
-    flush();
+    file.flush();
 }
 
 void timerInterrupt() {
-    // check time
-    if(secondsR != int(second())){
-        milliSecondsR = 0;
-        Serial.print("*");
-    }
 
     // read sensor val
     int xAxis = analogRead(analogPin00);
@@ -123,11 +110,7 @@ void timerInterrupt() {
     int zAxis = analogRead(analogPin02);
 
     // store data to ram buffer
-    store(xAxis, yAxis, zAxis, now());
-
-    //update time
-    milliSecondsR += interval;
-    secondsR = int(second());
+    storeData(xAxis, yAxis, zAxis, now());
 }
 
 String makeLogFileName() {
@@ -153,10 +136,6 @@ void setup() {
     // Set the number of seconds between re-syncs
     //setSyncInterval(10);
 
-    // Initialize time for milliSeconds
-    milliSecondsR = 0;
-    secondsR = int(second());
-
     // Initialize SD card
     if (!SD.begin(chipSelectSD)) {
         Serial.println("Card failed, or not present");
@@ -177,16 +156,18 @@ void setup() {
 }
 
 void loop() {
-
-    // Normalization
-    // 3.3V: 0-675, 5.0V: 0-1024
-    //  xAxis = map(xAxis, 0, 675, 0, 255);
-    //  yAxis = map(yAxis, 0, 675, 0, 255);
-    //  zAxis = map(zAxis, 0, 675, 0, 255);
-
+  
     // write data to SD from ramBuffer
     if(ramBuffer[writeBuffNo].full) {
+        Serial.println("tes");
         writeData(writeBuffNo, logFile);
         ramBuffer[writeBuffNo].full = false;
+        // chanege next buffer
+        if(writeBuffNo != buffNum - 1) {
+            writeBuffNo++;
+        }else{
+            writeBuffNo = 0;
+        }
+        activeBuffCount = 0;
     }
 }
