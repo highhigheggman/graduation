@@ -29,7 +29,7 @@
 #include <Wire.h> //http://arduino.cc/en/Reference/Wire (included with Arduino IDE)
 
 // log file
-File logFile;
+volatile File logFile;
 String logFileName = "";
 
 // analog pin
@@ -48,7 +48,7 @@ uint16_t zAxis = 0;
 
 // variable for write SD counter
 volatile int sdCount = 0;
-const int sdWriteTime = 6000;
+const int sdWriteTime = 1000;
 
 // Interval of timer interrupt (ms)
 const int interval = 10;
@@ -64,10 +64,16 @@ void timerInterrupt() {
 
     // SD
     if(logFile){
+        logFile.print(year());
+        logFile.print("/");
+        logFile.print(month());
+        logFile.print("/");
+        logFile.print(day());
+        logFile.print(" ");
         logFile.print(hour());
-        logFile.print(",");
+        logFile.print(":");
         logFile.print(minute());
-        logFile.print(",");
+        logFile.print(":");
         logFile.print(second());
         logFile.print(",");
         logFile.print(xAxis);
@@ -81,7 +87,7 @@ void timerInterrupt() {
 
     //update write SD counter
     sdCount += 1;
-    if(sdCount%1000 == 0) {
+    if(sdCount%100 == 0) {
         Serial.println(sdCount);
     }
 
@@ -89,7 +95,7 @@ void timerInterrupt() {
 
 String makeLogFileName() {
     // 8.3 format
-    return String(month()) + "_" + String(day()) + "_" + String(hour()) + ".log";
+    return "/log/" + String(month()) + "_" + String(day()) + "/" + String(hour()) + ".log";
 }
 
 void setup() {
@@ -102,10 +108,11 @@ void setup() {
 
     // set system time using RTC
     setSyncProvider(RTC.get);
-    if(timeStatus() != timeSet)
+    if(timeStatus() != timeSet) {
         Serial.println("Unable to sync with the RTC");
-    else
+    }else{
         Serial.println("RTC has set the system time");
+    }
 
     // Set the number of seconds between re-syncs
     //setSyncInterval(10);
@@ -120,7 +127,14 @@ void setup() {
 
     // open file / or create
     logFileName = makeLogFileName();
+    String dirName = "/log/" + String(month()) + "_" + String(day());
     Serial.println(logFileName);
+    if(!SD.exists("log")) {
+        SD.mkdir("log");
+    }
+    if(!SD.exists(dirName)) {
+        SD.mkdir(dirName);
+    }
     logFile = SD.open(logFileName, FILE_WRITE);
 
     // setting msTimer2
@@ -140,7 +154,6 @@ void loop() {
     // write data to SD
     if (sdCount > sdWriteTime) {
         MsTimer2::stop();
-        Serial.println();
         Serial.println("WriteStart");
         Serial.print(hour());
         Serial.print(",");
@@ -149,20 +162,31 @@ void loop() {
         Serial.println(second());
 
         if(logFileName.equals(makeLogFileName())) {
+            //write to file
             logFile.flush();
         }else{
+            //close file
+            logFile.close();
+
             //reopen file every 1hours
             logFileName = makeLogFileName();
+            String dirName = "/log/" + String(month()) + "_" + String(day());
             Serial.println(logFileName);
+
+            if(!SD.exists(dirName)){
+                SD.mkdir(dirName);
+            }
             logFile = SD.open(logFileName, FILE_WRITE);
 
             // set system time using RTC
             setSyncProvider(RTC.get);
-            if(timeStatus() != timeSet)
+            if(timeStatus() != timeSet) {
                 Serial.println("Unable to sync with the RTC");
-            else
+            }else{
                 Serial.println("RTC has set the system time");
+            }
         }
+
         Serial.println("WriteFin");
         sdCount = 0;
         MsTimer2::start();
