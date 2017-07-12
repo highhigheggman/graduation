@@ -25,8 +25,8 @@ def __main():
         sys.exit()
 
     # make empty dataFrame
-    # df = pd.DataFrame(columns=[('date', 'x', 'y', 'z'])
-    df = pd.DataFrame()
+    df = pd.DataFrame(columns=['date', 'x', 'y', 'z'])
+
 
     # if inputPath is directory Path
     if os.path.isdir(args[1]):
@@ -37,7 +37,7 @@ def __main():
 
         # read csv
         for filePathList in filePathList:
-            tempDf = pd.read_csv(filePathList, header=None, parse_dates=[0])
+            tempDf = pd.read_csv(filePathList, header=None, parse_dates=[0], na_values = 'na', dtype={1:'float64', 2:'float64', 3:'float64'})
             tempDf.columns = ['date', 'x', 'y', 'z']
             print(tempDf.head())
             print(tempDf.dtypes)
@@ -47,7 +47,7 @@ def __main():
     elif os.path.isfile(args[1]):
         filePath = args[1]
         # read csv
-        tempDf = pd.read_csv(filePath, header=None, parse_dates=[0])
+        tempDf = pd.read_csv(filePath, header=None, parse_dates=[0], na_values = 'na', dtype={1:'float64', 2:'float64', 3:'float64'})
         tempDf.columns = ['date', 'x', 'y', 'z']
         df = df.append(tempDf, ignore_index=True)
 
@@ -55,7 +55,6 @@ def __main():
     print(df.head())
     print(df.dtypes)
 
-"""
     # get unique date name list
     uDateList = df['date'].sort_values().unique()
 
@@ -69,6 +68,6 @@ def __main():
     print(sumD)
     print(uDateSize)
     print(sumD/uDateSize)
-"""
+
 if __name__ =='__main__':
     __main()
