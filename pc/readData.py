@@ -4,9 +4,14 @@
 import sys
 import os
 import glob
+import math
 import matplotlib.pyplot as plt
+import scipy.fftpack as sf
+from scipy import signal
+from mpl_toolkits.mplot3d import Axes3D
 import numpy as np
 import pandas as pd
+import cv2
 
 def returnFileInt(path):
     base = os.path.basename(path)
@@ -17,6 +22,86 @@ def returnFileInt(path):
     else:
         return root
 
+def fft1d(data, frequency, outputPath):
+    N = data.size   # num of sample
+    dt = 1/frequency  # sampling period
+
+    #data = [i-500 for i in data]
+
+    # remove spike noise using median filter
+    medData = signal.medfilt(data, 9)
+
+    # window
+    hammingWindow = signal.hamming(N)
+    windowedData = hammingWindow * medData
+
+    print(type(data))
+   # print(data)
+    print('num of sample')
+    print(N)
+    print('sampling frequency')
+    print(frequency)
+    print('sampling period')
+    print(dt)
+
+
+    fftRes = sf.fft(medData) / (N/2)
+    freq = sf.fftfreq(N, dt)
+
+    #plt.style.use('seaborn-colorblind')
+    plt.rcParams['font.family'] ='sans-serif'
+    plt.rcParams['xtick.direction'] = 'in'
+    plt.rcParams['ytick.direction'] = 'in'
+    plt.rcParams['xtick.major.width'] = 1.0
+    plt.rcParams['ytick.major.width'] = 1.0
+    #plt.rcParams['font.size'] = 8
+    plt.rcParams['axes.linewidth'] = 1.0
+
+    plt.figure(1, figsize=(20,10))
+    plt.subplot(211)
+    plt.plot(freq[1:int(N/2)], np.abs(fftRes)[1:int(N/2)])
+    plt.axis('tight')
+    plt.ylabel("amplitude")
+    plt.subplot(212)
+    plt.plot(freq[1:int(N/2)], np.angle(fftRes)[1:int(N/2)]*180/np.pi)
+    plt.axis('tight')
+    plt.ylim(-180, 180)
+    plt.xlabel("frequency[Hz]")
+    plt.ylabel("phase[deg]")
+
+    plt.figure(2, figsize=(20,10))
+    plt.subplot(211)
+    plt.loglog(freq[1:int(N/2)], np.abs(fftRes)[1:int(N/2)])
+    plt.axis('tight')
+    plt.ylabel("amplitude")
+    plt.subplot(212)
+    plt.semilogx(freq[1:int(N/2)], np.degrees(np.angle(fftRes)[1:int(N/2)]))
+    plt.axis('tight')
+    plt.ylim(-180, 180)
+    plt.xlabel("frequency[Hz]")
+    plt.ylabel("phase[deg]")
+
+    fig3, ax3 = plt.subplots(figsize=(10,5))
+    #plt.ylim([420, 540])
+    dtSec = dt * 1000
+    xAxis = [i*dtSec for i in range(N)]
+    ax3.plot(xAxis, medData)
+    #plt.xlim([0, 10240])
+    plt.ylabel("[mv/g]")
+    plt.xlabel("time[ms]")
+
+    """
+    fig4, ax4 = plt.subplots(figsize=(10,5))
+    dtSec = dt
+    xAxis = [i*dtSec for i in range(N)]
+    ax4.plot(xAxis, windowedData)
+    #plt.xlim([0, 10240])
+    plt.ylabel("[mv/g]")
+    plt.xlabel("time[sec]")
+    """
+
+    plt.show()
+
 def __main():
     args = sys.argv
 
@@ -26,7 +111,6 @@ def __main():
 
     # make empty dataFrame
     df = pd.DataFrame(columns=['date', 'x', 'y', 'z'])
-
 
     # if inputPath is directory Path
     if os.path.isdir(args[1]):
@@ -59,15 +143,25 @@ def __main():
     uDateList = df['date'].sort_values().unique()
 
     # get data useing unique date name list
-    sumD = 0
     uDateSize = uDateList.size
 
-    for uDateList in uDateList:
-        sumD += len(df[df['date'] == uDateList])
+    #for uDateList in uDateList:
+    #    sumD += len(df[df['date'] == uDateList])
 
-    print(sumD)
+    print(len(df.index))
     print(uDateSize)
-    print(sumD/uDateSize)
+    print(len(df.index)/uDateSize)
+
+    # sampling frequency
+    f = math.ceil(len(df.index)/uDateSize)
+
+    # make base save file path
+
+    # fft
+    fft1d(np.array(df['x'])[0:1024], f, 'file')
+    #fft1d(np.array(df.iloc[[i for i in df.index if i%2==0]]['x'])[0:1024], f/2, 'file')
+    #fft1d(np.array(df['y'])[0:2048], f, 'file')
+    #fft1d(np.array(df['z']), f, 'file')
 
 if __name__ =='__main__':
     __main()

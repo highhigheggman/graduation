@@ -15,7 +15,7 @@ RHReliableDatagram manager(driver, CLIENT_ADDRESS);
 const float frequency = 923.6;
 // transmitter power level in dBm (+5 to + 23)
 const uint8_t tPower = 20;
-
+// sf
 const int8_t sf = 7;
 
 void setup()
