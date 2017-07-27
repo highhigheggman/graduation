@@ -1,16 +1,16 @@
+#include <stdio.h>
 #include <TinyGPS++.h>
 #include <SoftwareSerial.h>
 #include <RHReliableDatagram.h>
 #include <RH_RF95.h>
 #include <SPI.h>
-#include <SD.h>
 
 #define CLIENT_ADDRESS 1
 #define SERVER_ADDRESS 2
 
 //-----------------gps--------------------
 TinyGPSPlus gps;
-SoftwareSerial gpsSerial(0, 1); // RX, TX
+SoftwareSerial gpsSerial(A1, A2); // RX, TX
 
 //-----------------LoRa-------------------
 // Singleton instance of the radio driver
@@ -26,13 +26,7 @@ const uint8_t tPower = 20;
 // sf
 const int8_t sf = 7;
 
-// ---------------SD-----------------------
-// log file
-File logFile;
-String logFileName = "";
-// LoRa ack
 bool ackL = false;
-
 
 // get data use GPS. and delay
 static void smartDelay(unsigned long ms)
@@ -43,7 +37,6 @@ static void smartDelay(unsigned long ms)
         while (gpsSerial.available()) {
             char c = gpsSerial.read();
             gps.encode(gpsSerial.read());
-            //gps.encode(gpsSerial.read());
             Serial.write(c);
         }
     } while (millis() - start < ms);
@@ -63,6 +56,9 @@ void setup() {
     // Setup Power,dBm
     driver.setTxPower(tPower, false);
 
+    // led
+    pinMode(3, OUTPUT);
+    pinMode(4, OUTPUT);
 }
 
 void loop() {
@@ -74,9 +70,13 @@ void loop() {
 
     // check satellites
     if (gps.satellites.value() > 0 && gps.satellites.isValid()) {
+    //if (true) {
+        digitalWrite(3,HIGH);
+        
         Serial.println(gps.location.lat(), gps.location.lng());
-        uint8_t data[] = "xxxxxx,xxxxxxx"; 
-
+        char data[30];
+        sprintf(data, "%s,%s",gps.location.lat(), gps.location.lng());
+        Serial.println(data);
         // check location
         if (gps.location.isUpdated()) {
             Serial.println("update");
@@ -86,37 +86,33 @@ void loop() {
         Serial.println("Sending to rf95_reliable_datagram_server");
         if (manager.sendtoWait(data, sizeof(data), SERVER_ADDRESS)) {
             ackL = true;
-            // SD
-            if (logFile) {
-                logFile.print(gps.location.lat());
-                logFile.print(",");
-                logFile.print(gps.location.lng());
-                logFile.print(",");
-                logFile.println(ackL);
-            } else {
-                Serial.println("missing open file");
-            }
+            digitalWrite(4,HIGH);
+
+            Serial.print(gps.location.lat());
+            Serial.print(",");
+            Serial.print(gps.location.lng());
+            Serial.print(",");
+            Serial.println(ackL);
             // delay and update
             smartDelay(10000);
 
         } else {
             Serial.println("sendtoWait failed");
             ackL = false;
-            // SD
-            if (logFile) {
-                logFile.print(gps.location.lat());
-                logFile.print(",");
-                logFile.print(gps.location.lng());
-                logFile.print(",");
-                logFile.println(ackL);
-            } else {
-                Serial.println("missing open file");
-            }
+            digitalWrite(4,LOW);
+
+            Serial.print(gps.location.lat());
+            Serial.print(",");
+            Serial.print(gps.location.lng());
+            Serial.print(",");
+            Serial.println(ackL);
+
             // delay and update
             smartDelay(1000);
         }
 
-    }else{
+    } else {
+        digitalWrite(3,LOW);
         smartDelay(1000);
     }
 
