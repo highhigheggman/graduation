@@ -47,7 +47,7 @@ void setup()
 
 uint8_t data[] = "And hello back to you";
 // Dont put this on the stack:
-uint8_t buf[RH_RF95_MAX_MESSAGE_LEN];
+char buf[RH_RF95_MAX_MESSAGE_LEN];
 
 void loop()
 {
@@ -62,7 +62,7 @@ void loop()
             Console.print("got request from : 0x");
             Console.print(from, HEX);
             Console.print(": ");
-            Console.println((char*)buf);
+            Console.println(buf);
             Console.print("RSSI: ");
             Console.println(driver.lastRssi(), DEC);
 

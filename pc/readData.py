@@ -81,11 +81,11 @@ def fft1d(data, frequency, outputPath):
     plt.xlabel("frequency[Hz]")
     plt.ylabel("phase[deg]")
 
-    fig3, ax3 = plt.subplots(figsize=(10,5))
+    fig3, ax3 = plt.subplots(figsize=(20,10))
     #plt.ylim([420, 540])
     dtSec = dt * 1000
     xAxis = [i*dtSec for i in range(N)]
-    ax3.plot(xAxis, medData)
+    ax3.plot(xAxis, data)
     #plt.xlim([0, 10240])
     plt.ylabel("[mv/g]")
     plt.xlabel("time[ms]")

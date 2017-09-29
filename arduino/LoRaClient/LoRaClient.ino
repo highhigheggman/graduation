@@ -1,9 +1,10 @@
 #include <RHReliableDatagram.h>
 #include <RH_RF95.h>
-#include <SPI.h>
+#include <MsTimer2.h>
+#include <stdio.h>
 
 #define CLIENT_ADDRESS 1
-#define SERVER_ADDRESS 2 
+#define SERVER_ADDRESS 2
 
 // Singleton instance of the radio driver
 RH_RF95 driver;
@@ -18,8 +19,77 @@ const uint8_t tPower = 20;
 // sf
 const int8_t sf = 7;
 
-void setup()
-{
+// send data
+char data[30];
+char cMaxAcc[10];
+char cMinAcc[10];
+
+// Analog Pin
+const int analogPin00 = A0;
+const int analogPin01 = A1;
+const int analogPin02 = A2;
+
+// variable for sensor
+double xAxis = 0;
+double yAxis = 0;
+double zAxis = 0;
+double comAcc = 0;
+
+// Interval of timer interrupt (ms)
+const uint8_t interval = 10;
+
+// variable for Counter
+volatile int count = 0;
+uint64_t maxCount = 1000;
+
+// store accleration
+volatile double maxAcc = 0;
+volatile double minAcc = 0;
+volatile double sumAcc = 0;
+volatile double aveAcc = 0;
+
+void timerInterrupt() {
+    // allow interrupt
+    interrupts();
+
+    // read sensor value
+    xAxis = analogRead(analogPin00);
+    yAxis = analogRead(analogPin01);
+    zAxis = analogRead(analogPin02);
+
+    // calc combined accleration
+    comAcc = sqrt(xAxis*xAxis + yAxis*yAxis + zAxis*zAxis);
+
+    // check max, min
+    if(count == 0){
+      maxAcc = comAcc;
+      minAcc = comAcc;
+    }
+    if(comAcc > maxAcc) {
+        maxAcc = comAcc;
+    }
+
+    if(comAcc < minAcc) {
+        minAcc = comAcc;
+    }
+
+    // update counter
+    count += 1;
+    if(count%100 == 0) {
+      Serial.print(xAxis);
+      Serial.print(",");
+      Serial.print(yAxis);
+      Serial.print(",");
+      Serial.print(zAxis);
+      Serial.print(",");
+      Serial.print(comAcc);
+      Serial.print(",");
+      Serial.println(count);
+    }
+
+}
+
+void setup() {
     Serial.begin(9600);
     while (!Serial) ; // Wait for serial port to be available
     if (!manager.init())
@@ -31,38 +101,36 @@ void setup()
     // Setup Power,dBm
     driver.setTxPower(tPower, false);
 
+
+    // setting msTimer2
+    MsTimer2::set(interval, timerInterrupt);
+    MsTimer2::start();
+    Serial.println("mstimer2 start");
 }
 
-//uint8_t data[] = "1abcdefghi2abcdefghi3abcdefghi4abcdefghi5abcdefghi6abcdefghi7abcdefghi8abcdefghi9abcdefghi10abcdefgh11abcdefgh12abcdefgh13abcdefgh14abcdefgh15abcdefgh16abcdefgh17abcdefgh18abcdefgh19abcdefgh20abcdefgh21abcdefgh22abcdefgh23abcdefgh24abcdefgh25abcdefgh";
-uint8_t data[] = "aaa";
-// Dont put this on the stack:
-//uint8_t buf[RH_RF95_MAX_MESSAGE_LEN];
 
-void loop()
-{
-    Serial.println("Sending to rf95_reliable_datagram_server");
+void loop() {
 
-    // Send a message to manager_server
-    if (manager.sendtoWait(data, sizeof(data), SERVER_ADDRESS))
-    {
-      /*
-        // Now wait for a reply from the server
-        uint8_t len = sizeof(buf);
-        uint8_t from;
-        if (manager.recvfromAckTimeout(buf, &len, 2000, &from))
-        {
-            Serial.print("got reply from : 0x");
-            Serial.print(from, HEX);
-            Serial.print(": ");
-            Serial.println((char*)buf);
+    if( count >= maxCount) {
+        MsTimer2::stop();
+        dtostrf(maxAcc, -9, 4, cMaxAcc);
+        dtostrf(minAcc, -9, 4, cMinAcc);
+        sprintf(data, "%s,%s", cMaxAcc, cMinAcc);
+        Serial.println(maxAcc);
+        Serial.println(minAcc);
+        
+        // Send a message to manager_server
+        Serial.println("Sending to rf95_reliable_datagram_server");
+        if (manager.sendtoWait(data, sizeof(data), SERVER_ADDRESS)) {
+            Serial.println("sendtoWait success");
+        } else {
+            Serial.println("sendtoWait failed");
         }
-        else
-        {
-            Serial.println("No reply, is rf95_reliable_datagram_server running?");
-        }
-        */
+
+        count = 0;
+        maxAcc = 0;
+        minAcc = 0;
+        MsTimer2::start();
     }
-    else
-        Serial.println("sendtoWait failed");
-    delay(500);
+
 }

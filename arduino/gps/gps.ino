@@ -26,7 +26,7 @@ const uint8_t tPower = 20;
 // sf
 const int8_t sf = 7;
 
-bool ackL = false;
+int count;
 
 // get data use GPS. and delay
 static void smartDelay(unsigned long ms)
@@ -59,24 +59,43 @@ void setup() {
     // led
     pinMode(3, OUTPUT);
     pinMode(4, OUTPUT);
+
+    count = 0;
 }
 
 void loop() {
 
     Serial.print("satellites:");
-    Serial.print(gps.satellites.value());
-    Serial.print(",");
-    Serial.println(gpsSerial.available());
+    Serial.println(gps.satellites.value());
 
-    // check satellites
-    if (gps.satellites.value() > 0 && gps.satellites.isValid()) {
-    //if (true) {
-        digitalWrite(3,HIGH);
+    if (true) {
+        if(gps.satellites.value() > 0){
+          digitalWrite(3,HIGH);
+        }else{
+          digitalWrite(3,LOW);
+        }
         
-        Serial.println(gps.location.lat(), gps.location.lng());
+        Serial.print("count");
+        Serial.println(count);
+        
         char data[30];
-        sprintf(data, "%s,%s",gps.location.lat(), gps.location.lng());
+        char latGPS[10];
+        char lngGPS[10];
+        
+        dtostrf(gps.location.lng(), -9, 4, latGPS);
+        Serial.print(gps.location.lat());
+        Serial.print(" ");
+        Serial.println(latGPS);
+
+        dtostrf(gps.location.lng(), -9, 4, lngGPS);
+        Serial.print(gps.location.lng());
+        Serial.print(" ");
+        Serial.println(lngGPS);
+        
+        sprintf(data, "%s,%s,%d", latGPS, lngGPS, count);
         Serial.println(data);
+        Serial.println();
+        
         // check location
         if (gps.location.isUpdated()) {
             Serial.println("update");
@@ -85,27 +104,16 @@ void loop() {
         // send Data
         Serial.println("Sending to rf95_reliable_datagram_server");
         if (manager.sendtoWait(data, sizeof(data), SERVER_ADDRESS)) {
-            ackL = true;
             digitalWrite(4,HIGH);
 
-            Serial.print(gps.location.lat());
-            Serial.print(",");
-            Serial.print(gps.location.lng());
-            Serial.print(",");
-            Serial.println(ackL);
             // delay and update
             smartDelay(10000);
 
+            count+=1;
+
         } else {
             Serial.println("sendtoWait failed");
-            ackL = false;
             digitalWrite(4,LOW);
-
-            Serial.print(gps.location.lat());
-            Serial.print(",");
-            Serial.print(gps.location.lng());
-            Serial.print(",");
-            Serial.println(ackL);
 
             // delay and update
             smartDelay(1000);

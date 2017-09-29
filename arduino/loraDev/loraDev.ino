@@ -83,6 +83,7 @@ void timerInterrupt() {
         logFile.println(zAxis);
     }else{
         Serial.println("missing open file");
+        Serial.println(xAxis);
     }
 
     //update write SD counter
