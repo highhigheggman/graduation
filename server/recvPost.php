@@ -5,8 +5,11 @@ $maxAcc = $_POST['maxAcc'];
 $minAcc = $_POST['minAcc'];
 $sensorTime = $_POST['time'];
 
+echo 'hello';
+
 // check POST data
 if(empty($deviceId) || empty($maxAcc) || empty($minAcc) || empty($sensorTime)) {
+    echo 'error';
     exit();
 }
 
