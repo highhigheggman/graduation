@@ -5,7 +5,7 @@ $maxAcc = $_POST['maxAcc'];
 $minAcc = $_POST['minAcc'];
 $sensorTime = $_POST['time'];
 
-echo $deviceID, ' ', $maxAcc, ' ', $minAcc, ' ', $sensorTime;
+echo $deviceId, ' ', $maxAcc, ' ', $minAcc, ' ', $sensorTime;
 
 // check POST data
 if(empty($deviceId) || empty($maxAcc) || empty($minAcc) || empty($sensorTime)) {
@@ -29,7 +29,7 @@ try {
     // use Prepares
     $pdo->setAttribute(PDO::ATTR_EMULATE_PREPARES, false);
 
-    $stmt = $pdo->prepare('insert into acc_DB.sensorVal (deviceID, maxAcc, minAcc, sensorTime) values(:deviceId, :maxAcc, :minAcc, :sensorTime)');
+    $stmt = $pdo->prepare('insert into acc_DB.sensorVal (deviceId, maxAcc, minAcc, sensorTime) values(:deviceId, :maxAcc, :minAcc, :sensorTime)');
     $stmt->bindValue(':deviceId', $deviceId, PDO::PARAM_INT);
     $stmt->bindValue(':maxAcc', $maxAcc, PDO::PARAM_STR);
     $stmt->bindValue(':minAcc', $minAcc, PDO::PARAM_STR);
