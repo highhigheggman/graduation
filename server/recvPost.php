@@ -5,11 +5,11 @@ $maxAcc = $_POST['maxAcc'];
 $minAcc = $_POST['minAcc'];
 $sensorTime = $_POST['time'];
 
-echo 'hello';
+echo 'Hello ';
 
 // check POST data
 if(empty($deviceId) || empty($maxAcc) || empty($minAcc) || empty($sensorTime)) {
-    echo 'error';
+    echo 'Error';
     exit();
 }
 
@@ -38,6 +38,7 @@ try {
     $stmt->execute();
 
 } catch (PDOException $e) {
+    echo 'SQL';
     echo 'Connection failed: ' . $e->getMessage();
 }
 
