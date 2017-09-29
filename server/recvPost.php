@@ -29,10 +29,14 @@ try {
 
     // insert data to DB
     $stmt = $pdo->prepare('insert into acc_DB.sensorVal (deviceId, maxAcc, minAcc, sensorTime) values(:deviceId, :maxAcc, :minAcc, :sensorTime)');
-    $stmt->bindValue(':deviceId', $deviceId, PDO::PARAM_INT);
-    $stmt->bindValue(':maxAcc', $maxAcc, PDO::PARAM_STR);
-    $stmt->bindValue(':minAcc', $minAcc, PDO::PARAM_STR);
-    $stmt->bindValue(':sensorTime', $sensorTime, PDO::PARAM_STR);
+    //$stmt->bindValue(':deviceId', $deviceId, PDO::PARAM_INT);
+    //$stmt->bindValue(':maxAcc', $maxAcc, PDO::PARAM_STR);
+    //$stmt->bindValue(':minAcc', $minAcc, PDO::PARAM_STR);
+    //$stmt->bindValue(':sensorTime', $sensorTime, PDO::PARAM_STR);
+    $stmt->bindValue(':deviceId', '12345', PDO::PARAM_INT);
+    $stmt->bindValue(':maxAcc', '2345', PDO::PARAM_STR);
+    $stmt->bindValue(':minAcc', '6789', PDO::PARAM_STR);
+    $stmt->bindValue(':sensorTime', '2017-5-09 11:23:34', PDO::PARAM_STR);
 
     $stmt->execute();
 
