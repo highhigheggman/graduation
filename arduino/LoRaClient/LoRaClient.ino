@@ -113,8 +113,8 @@ void loop() {
 
     if( count >= maxCount) {
         MsTimer2::stop();
-        dtostrf(maxAcc, -9, 4, cMaxAcc);
-        dtostrf(minAcc, -9, 4, cMinAcc);
+        dtostrf(maxAcc, -7, 2, cMaxAcc);
+        dtostrf(minAcc, -7, 2, cMinAcc);
         sprintf(data, "%s,%s", cMaxAcc, cMinAcc);
         Serial.println(maxAcc);
         Serial.println(minAcc);

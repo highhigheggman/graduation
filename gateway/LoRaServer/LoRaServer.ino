@@ -2,6 +2,9 @@
 #include <RH_RF95.h>
 #include <SPI.h>
 #include <Console.h>
+#include <Process.h>
+#include <stdio.h>
+#include <string.h>
 
 #define CLIENT_ADDRESS 1
 #define SERVER_ADDRESS 2
@@ -9,8 +12,6 @@
 //If you use Dragino IoT Mesh Firmware, uncomment below lines.
 //For product: LG01. 
 #define BAUDRATE 115200
-
-int led = A2;
 
 // Singleton instance of the radio driver
 RH_RF95 driver;
@@ -23,10 +24,15 @@ const float frequency = 923.6;
 // transmitter power level in dBm (+5 to + 23)
 const uint8_t tPower = 20;
 
+// command. bridge lib
+Process date;
+String nowDate;
+Process post;
+String postRet;
+
 void setup()
 {
-    Serial.begin(9600);
-    pinMode(led, OUTPUT);     
+    Serial.begin(9600);  
     Bridge.begin(BAUDRATE);
     Console.begin();
     while (!Console) ; // Wait for console port to be available
@@ -45,9 +51,8 @@ void setup()
     Console.println(frequency);
 }
 
-uint8_t data[] = "And hello back to you";
 // Dont put this on the stack:
-char buf[RH_RF95_MAX_MESSAGE_LEN];
+char buf[40];
 
 void loop()
 {
@@ -58,7 +63,6 @@ void loop()
         uint8_t from;
         if (manager.recvfromAck(buf, &len, &from))
         {
-            digitalWrite(led, HIGH);
             Console.print("got request from : 0x");
             Console.print(from, HEX);
             Console.print(": ");
@@ -66,9 +70,34 @@ void loop()
             Console.print("RSSI: ");
             Console.println(driver.lastRssi(), DEC);
 
-            // Send a reply back to the originator client
-            //if (!manager.sendtoWait(data, sizeof(data), from))
-            //    Console.println("sendtoWait failed");
+            //split buf
+            String maxAcc = String(strtok(buf, ","));
+            String minAcc = String(strtok(NULL , ","));
+
+            //get time
+            if(!date.running()){
+              date.begin("date");
+              date.addParameter("+""%Y-%m-%d %H:%M:%S""");
+              date.run();
+              nowDate = date.readString();
+
+              Console.print(nowDate);
+            }
+
+            // http POST/ curl
+            if(!post.running()){
+              post.begin("curl");
+              post.addParameter("-d ""deviceId=00001""");
+              post.addParameter("-d ""maxAcc=" + maxAcc + """");
+              post.addParameter("-d ""minAcc=" + minAcc + """");
+              post.addParameter("-d ""time=" + nowDate + """");
+              post.addParameter("http://150.95.148.129/recvPost.php");
+              post.run();
+
+              postRet = post.readString();
+              Console.println(postRet);
+            }
+
         }
     }
 }
