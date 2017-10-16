@@ -9,6 +9,7 @@
 #define CLIENT_ADDRESS 1
 #define SERVER_ADDRESS 2
 
+
 //If you use Dragino IoT Mesh Firmware, uncomment below lines.
 //For product: LG01. 
 #define BAUDRATE 115200
@@ -72,7 +73,9 @@ void loop()
 
             //split buf
             String maxAcc = String(strtok(buf, ","));
+            maxAcc.trim();
             String minAcc = String(strtok(NULL , ","));
+            minAcc.trim();
 
             //get time
             if(!date.running()){
@@ -87,7 +90,7 @@ void loop()
             // http POST/ curl
             if(!post.running()){
               post.begin("curl");
-              post.addParameter("-d ""deviceId=00001""");
+              post.addParameter("-d ""deviceId=10001""");
               post.addParameter("-d ""maxAcc=" + maxAcc + """");
               post.addParameter("-d ""minAcc=" + minAcc + """");
               post.addParameter("-d ""time=" + nowDate + """");

@@ -27,7 +27,7 @@ try {
 
 
     // insert data to DB
-    $stmt = $pdo->prepare('insert into acc_DB.sensorVal (deviceId, maxAcc, minAcc, sensorTime) values(:deviceId, :maxAcc, :minAcc, :sensorTime)');
+    $stmt = $pdo->prepare('INSERT INTO acc_DB.sensorVal (deviceId, maxAcc, minAcc, sensorTime) VALUES(:deviceId, :maxAcc, :minAcc, :sensorTime)');
     $stmt->bindValue(':deviceId', $deviceId, PDO::PARAM_INT);
     $stmt->bindValue(':maxAcc', $maxAcc, PDO::PARAM_STR);
     $stmt->bindValue(':minAcc', $minAcc, PDO::PARAM_STR);
