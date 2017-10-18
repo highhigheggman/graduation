@@ -56,6 +56,7 @@
     var minAcc = <?php echo json_encode($selectMinAcc, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); ?>;
     var time = <?php echo json_encode($selectTime, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); ?>;
     var upTime = <?php echo json_encode($upTime, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); ?>;
+    <?php echo json_encode($upTime, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); ?>
 
     //graph
     var ctx = document.getElementById("myChart").getContext('2d');
