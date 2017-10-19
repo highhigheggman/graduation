@@ -48,14 +48,18 @@ volatile double minAcc = 0;
 volatile double sumAcc = 0;
 volatile double aveAcc = 0;
 
+double toAccele(double accele) {
+    return ((accele * 3.3/1024) - 1.65) / 0.66;
+}
+
 void timerInterrupt() {
     // allow interrupt
     interrupts();
 
     // read sensor value
-    xAxis = analogRead(analogPin00);
-    yAxis = analogRead(analogPin01);
-    zAxis = analogRead(analogPin02);
+    xAxis = toAccele(analogRead(analogPin00));
+    yAxis = toAccele(analogRead(analogPin01));
+    zAxis = toAccele(analogRead(analogPin02));
 
     // calc combined accleration
     comAcc = sqrt(xAxis*xAxis + yAxis*yAxis + zAxis*zAxis);
@@ -113,12 +117,12 @@ void loop() {
 
     if( count >= maxCount) {
         MsTimer2::stop();
-        dtostrf(maxAcc, -7, 2, cMaxAcc);
-        dtostrf(minAcc, -7, 2, cMinAcc);
+        dtostrf(maxAcc, -7, 6, cMaxAcc);
+        dtostrf(minAcc, -7, 6, cMinAcc);
         sprintf(data, "%s,%s", cMaxAcc, cMinAcc);
         Serial.println(maxAcc);
         Serial.println(minAcc);
-        
+
         // Send a message to manager_server
         Serial.println("Sending to rf95_reliable_datagram_server");
         if (manager.sendtoWait(data, sizeof(data), SERVER_ADDRESS)) {

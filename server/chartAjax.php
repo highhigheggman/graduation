@@ -3,7 +3,6 @@ header('Content-Type: application/json');
 
 $time = $_POST['time'];
 
-
 // check POST data
 if(empty($sensorTime)) {
     echo 'Error Post';
@@ -27,10 +26,10 @@ try {
     // selsect data from DB
     // select from DB
     $stmt = $pdo->prepare(
-        'SELECT maxAcc, minAcc, DATE_FORMAT(sensorTime, ''%H:%i:%S'')
+        "SELECT maxAcc, minAcc, DATE_FORMAT(sensorTime, '%H:%i:%S')
         FROM acc_DB.sensorVal
-        WHERE deviceID=10001 AND sensorTime > :time
-        ORDER BY sensorTime DESC LIMIT 100;'
+        WHERE deviceID=10001 AND sensorTime > ':time'
+        LIMIT 100;"
         );
 
     $stmt->bindValue(':time', $time, PDO::PARAM_STR);
@@ -40,6 +39,9 @@ try {
     $selectMaxAcc = array_column($selectData, 'maxAcc');
     $selectMinAcc = array_column($selectData, 'mixAcc');
     $selectTime = array_column($selectData, 'sensorTime');
+
+    $jsonArr = array($selectMaxAcc, $selectMinAcc, $selectTime);
+    echo json_encode($jsonArr);
 
 } catch (PDOException $e) {
     echo 'Connection failed: ' . $e->getMessage();

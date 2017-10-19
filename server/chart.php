@@ -109,7 +109,6 @@
             options: options
     });
 
-    /*
     // update graph every 10sec
     setInterval(process, 10000);
     function process() {
@@ -123,9 +122,10 @@
             datatype: 'json',
             timeout: 5000,
         }).done(function(response)) {
+            document.write('aaa');
         }
     }
-    */
+
     </script>
 </body>
 </html>
