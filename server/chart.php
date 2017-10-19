@@ -25,6 +25,8 @@
         $selectMinAcc = array_reverse(array_column($selectData, "minAcc"));
         $selectTime = array_reverse(array_column($selectData, "DATE_FORMAT(sensorTime, '%H:%i:%S')"));
 
+
+
         // check update time of latest data
         $stmt = $pdo->query(
             "SELECT sensorTime
@@ -39,7 +41,6 @@
     } catch (PDOException $e) {
         echo 'Connection failed: ' . $e->getMessage();
     }
-
 ?>
 <!DOCTYPE html>
 <html lang="ja">
@@ -62,7 +63,7 @@
     //document.writeln(maxAcc);
     //document.writeln(minAcc);
     //document.writeln(time);
-    //document.writeln(upTime);
+    document.writeln(upTime);
 
     //graph
     var chartData = {
@@ -88,19 +89,6 @@
     var options = {
         scaleOverride : true,
         legendTemplate : "<% for (var i=0; i<datasets.length; i++){%><span style=\"background-color:<%=datasets[i].strokeColor%>\">&nbsp;&nbsp;&nbsp;</span>&nbsp;<%if(datasets[i].label){%><%=datasets[i].label%><%}%><br><%}%>"
-        /*
-        scales:{
-            yAxes: [
-                {
-                ticks: {
-                    beginAtZero: true,
-                    min: 0,
-                    max: 3.0
-                    }
-                }
-            ]
-        }
-        */
     }
 
     var lineChart = new Chart(ctx, {
@@ -109,21 +97,42 @@
             options: options
     });
 
-    // update graph every 10sec
     setInterval(process, 10000);
+    var i = 0;
     function process() {
-        document.write("Test");
         $.ajax({
             url: 'chartAjax.php',
             type: 'post',
             data: {
-                'time' : upTime
+                time : upTime
             },
             datatype: 'json',
-            timeout: 5000,
-        }).done(function(response)) {
-            document.write('aaa');
-        }
+            timeout: 5000
+        })
+        .done(function(response) {
+            console.log(response["maxAcc"]);
+            console.log(response["minAcc"]);
+            console.log(response["time"]);
+            console.log(response["upTime"]);
+            upTime = response["upTime"];
+
+            // update graph
+            for(var i = 0; i < response["maxAcc"].length; i++) {
+                lineChart.data.labels.push(response["time"][i]);
+                lineChart.data.labels.shift();
+
+                lineChart.data.datasets[0]["data"].push(response["maxAcc"][i]);
+                lineChart.data.datasets[0]["data"].shift();
+                lineChart.data.datasets[1]["data"].push(response["minAcc"][i]);
+                lineChart.data.datasets[1]["data"].shift();
+            }
+                lineChart.update();
+
+
+        })
+        .fail(function () {
+            console.log("error Ajax!");
+        });
     }
 
     </script>
