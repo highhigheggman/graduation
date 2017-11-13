@@ -27,12 +27,13 @@ def __main():
     cnx = mysql.connector.connect(**config)
     cursor = cnx.cursor(prepared=True)
 
-    stmt = "SELECT maxAcc, minAcc, DATE_FORMAT(sensorTime, '%H:%i:%S')
+    stmt = "SELECT maxAcc, minAcc
             FROM acc_DB.sensorVal
             WHERE deviceID = 10001
-           ORDER BY sensorTime DESC LIMIT 100;"
+            ORDER BY sensorTime DESC LIMIT 100;"
 
     cursor.excute(stmt)
+    print('aaa')
 
     # get data useing unique date name list
     maxList = []
