@@ -54,14 +54,17 @@ def fft1d(data, frequency, outputPath):
     plt.rcParams['ytick.direction'] = 'in'
     plt.rcParams['xtick.major.width'] = 1.0
     plt.rcParams['ytick.major.width'] = 1.0
-    #plt.rcParams['font.size'] = 8
+    plt.rcParams['font.size'] = 30
     plt.rcParams['axes.linewidth'] = 1.0
 
     plt.figure(1, figsize=(20,10))
-    plt.subplot(211)
+    #plt.subplot(211)
     plt.plot(freq[1:int(N/2)], np.abs(fftRes)[1:int(N/2)])
     plt.axis('tight')
+    plt.xlim(0,15)
     plt.ylabel("amplitude")
+    plt.xlabel("frequency[Hz]")
+    """
     plt.subplot(212)
     plt.plot(freq[1:int(N/2)], np.angle(fftRes)[1:int(N/2)]*180/np.pi)
     plt.axis('tight')
@@ -80,13 +83,12 @@ def fft1d(data, frequency, outputPath):
     plt.ylim(-180, 180)
     plt.xlabel("frequency[Hz]")
     plt.ylabel("phase[deg]")
-
+    """
     fig3, ax3 = plt.subplots(figsize=(20,10))
     #plt.ylim([420, 540])
     dtSec = dt * 1000
     xAxis = [i*dtSec for i in range(N)]
-    ax3.plot(xAxis, data)
-    #plt.xlim([0, 10240])
+    ax3.plot(xAxis, medData)
     plt.ylabel("[mv/g]")
     plt.xlabel("time[ms]")
 
@@ -135,6 +137,19 @@ def __main():
         tempDf.columns = ['date', 'x', 'y', 'z']
         df = df.append(tempDf, ignore_index=True)
 
+    # noise filter
+    df['x'] = signal.medfilt(df['x'], 3)
+    df['y'] = signal.medfilt(df['y'], 3)
+    df['z'] = signal.medfilt(df['z'], 3)
+
+    # Degital -> Voltage -> Voltage - offset Voltage / (vdd/5) = g
+    df['x'] = (df['x'] * 5.0) / 1024 - 2.5
+    df['y'] = (df['y'] * 5.0) / 1024 - 2.5
+    df['z'] = (df['z'] * 5.0) / 1024 - 2.5
+
+    # Combined acceleration
+    df['comAcc'] = np.sqrt(df['x']*df['x'] + df['y']*df['y'] + df['z']*df['z'])
+
 
     print(df.head())
     print(df.dtypes)
@@ -158,7 +173,7 @@ def __main():
     # make base save file path
 
     # fft
-    fft1d(np.array(df['x'])[0:1024], f, 'file')
+    fft1d(np.array(df['comAcc'])[0:2048], f, 'file')
     #fft1d(np.array(df.iloc[[i for i in df.index if i%2==0]]['x'])[0:1024], f/2, 'file')
     #fft1d(np.array(df['y'])[0:2048], f, 'file')
     #fft1d(np.array(df['z']), f, 'file')

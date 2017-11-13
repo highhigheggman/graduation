@@ -15,11 +15,12 @@ RHReliableDatagram manager(driver, CLIENT_ADDRESS);
 // transmitter and receiver centre frequency
 const float frequency = 923.6;
 // transmitter power level in dBm (+5 to + 23)
-const uint8_t tPower = 20;
+const uint8_t tPower = 13;
 // sf
 const int8_t sf = 7;
 
 int count;
+int countAll;
 
 void setup() {
     Serial.begin(115200);
@@ -38,32 +39,37 @@ void setup() {
     // led
     pinMode(4, OUTPUT);
 
-    count = 1;
+    count = 0;
+    countAll = 0;
 }
 
 void loop() {
 
-    char data[6];
+    char data[10];
 
     sprintf(data, "%d", count);
-    Serial.println(data);
-    Serial.println();
 
     // send Data
-    Serial.println("Sending to rf95_reliable_datagram_server");
+    //Serial.println("Sending to rf95_reliable_datagram_server");
     if (manager.sendtoWait(data, sizeof(data), SERVER_ADDRESS)) {
         digitalWrite(4,HIGH);
         count+=1;
+        countAll+=1;
 
         delay(1000);
 
     } else {
-        Serial.println("sendtoWait failed");
+        //Serial.println("sendtoWait failed");
         digitalWrite(4,LOW);
-        count+=1;
+        countAll+=1;
 
         // delay and update
         delay(1000);
     }
+    Serial.print(count);
+    Serial.print("/");
+    Serial.print(countAll);
+    Serial.print(" RSSI:");
+    Serial.println(driver.lastRssi(), DEC);
 
 }
