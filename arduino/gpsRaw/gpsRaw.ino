@@ -1,6 +1,3 @@
-#include <SoftwareSerial.h>
-
-SoftwareSerial mySerial(A1, A2); // RX, TX
 
 void setup() {
   // Open serial communications and wait for port to open:
@@ -10,13 +7,10 @@ void setup() {
   }
 
   Serial.println("Serial begin");
-
-  // set the data rate for the SoftwareSerial port
-  mySerial.begin(9600);
 }
 
 void loop() { // run over and over
-  if (mySerial.available()) {
-    Serial.write(mySerial.read());
+  if (Serial.available()) {
+    Serial.write(Serial.read());
   }
 }
