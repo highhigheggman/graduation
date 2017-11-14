@@ -16,6 +16,8 @@ def __main():
         print('usage: python k-nearest.py [maxAcc] [minAcc]')
         sys.exit()
 
+    nowAcc = [args[1], args[2]]
+
     # connect db
     config ={
         'user': 'web',
@@ -25,33 +27,24 @@ def __main():
     }
 
     cnx = mysql.connector.connect(**config)
-    cursor = cnx.cursor(prepared=True)
 
-    stmt = "SELECT maxAcc, minAcc
-            FROM acc_DB.sensorVal
-            WHERE deviceID = 10001
-            ORDER BY sensorTime DESC LIMIT 100;"
+    # check connect
+    if(cnx.is_connected() == False):
+        exit()
 
-    cursor.excute(stmt)
-    print('aaa')
+    # select data from DB
+    cursor = cnx.cursor()
+    stmt = "SELECT maxAcc, minAcc FROM acc_DB.sensorVal WHERE deviceID = 10001 ORDER BY sensorTime DESC LIMIT 100;"
+    cursor.execute(stmt)
+    accList = cursor.fetchall()
 
-    # get data useing unique date name list
-    maxList = []
-    minList = []
-    accList = []
-
-    '''
     # Nearest Neighbors
-    testAccList = accList[250:350]
-    testMaxList = maxList[250:350]
-    testMinList = minList[250:350]
-
     neigh = NearestNeighbors(n_neighbors=5)
-    neigh.fit(testAccList)
-    distances, indices = neigh.kneighbors([[2.0, 1.0]])
-    print(distances)
-    print(neigh.radius_neighbors([[2.0, 1.0]], 0.25))
-    '''
+    neigh.fit(accList)
+    #distances, indices = neigh.kneighbors([nowAcc])
+    #print(distances)
+    print(len(neigh.radius_neighbors([nowAcc], 0.25)[0][0]))
+    #print(neigh.radius_neighbors([nowAcc], 0.25))
 
 if __name__ =='__main__':
     __main()

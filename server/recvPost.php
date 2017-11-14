@@ -21,10 +21,13 @@ try {
         array(
             PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
             PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-            
         )
     );
 
+    $cmd ='/home/b1014185/.pyenv/versions/anaconda3-4.1.1/bin//python /var/www/cgi-bin/k-nearest.py'.' '.(string)$maxAcc.' '.(string)$minAcc;
+    exec($cmd, $out, $status);
+    print_r($out);
+    print_r($status);
 
     // insert data to DB
     $stmt = $pdo->prepare('INSERT INTO acc_DB.sensorVal (deviceId, maxAcc, minAcc, sensorTime) VALUES(:deviceId, :maxAcc, :minAcc, :sensorTime)');
