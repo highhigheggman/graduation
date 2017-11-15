@@ -30,13 +30,18 @@ def __main():
 
     # check connect
     if(cnx.is_connected() == False):
-        exit()
+        sys.exit()
 
     # select data from DB
     cursor = cnx.cursor()
     stmt = "SELECT maxAcc, minAcc FROM acc_DB.sensorVal WHERE deviceID = 10001 ORDER BY sensorTime DESC LIMIT 100;"
     cursor.execute(stmt)
     accList = cursor.fetchall()
+
+    # check data
+    if(len(accList) < 10):
+        print('0')
+        sys.exit()
 
     # Nearest Neighbors
     neigh = NearestNeighbors(n_neighbors=5)
