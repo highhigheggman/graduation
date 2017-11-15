@@ -23,7 +23,7 @@ RHReliableDatagram manager(driver, SERVER_ADDRESS);
 // transmitter and receiver centre frequency
 const float frequency = 923.6;
 // transmitter power level in dBm (+5 to + 23)
-const uint8_t tPower = 20;
+const uint8_t tPower = 13;
 
 // command. bridge lib
 Process date;

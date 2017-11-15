@@ -13,7 +13,7 @@
 
         // select from DB
         $stmt = $pdo->query(
-            "SELECT maxAcc, minAcc, DATE_FORMAT(sensorTime, '%H:%i:%S')
+            "SELECT maxAcc, minAcc,kNear, DATE_FORMAT(sensorTime, '%H:%i:%S')
             FROM acc_DB.sensorVal
             WHERE deviceID=10001
             ORDER BY sensorTime DESC LIMIT 100;"
@@ -23,6 +23,7 @@
         // get data and conver acc
         $selectMaxAcc = array_reverse(array_column($selectData, "maxAcc"));
         $selectMinAcc = array_reverse(array_column($selectData, "minAcc"));
+        $selectKNear = array_reverse(array_column($selectData, "kNear"));
         $selectTime = array_reverse(array_column($selectData, "DATE_FORMAT(sensorTime, '%H:%i:%S')"));
 
 
@@ -52,11 +53,13 @@
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
     <script src="./Chart.min.js"></script>
     <canvas id="lineChart" width="800" height="450"></canvas>
+    <canvas id="kNearChart" width="800" height="450"></canvas>
 
     <script>
 
     var maxAcc = <?php echo json_encode($selectMaxAcc, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); ?>;
     var minAcc = <?php echo json_encode($selectMinAcc, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); ?>;
+    var kNear = <?php echo json_encode($selectKNear, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); ?>;
     var time = <?php echo json_encode($selectTime, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); ?>;
     var upTime = <?php echo json_encode($upTime, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); ?>;
 
@@ -65,7 +68,7 @@
     //document.writeln(time);
     document.writeln(upTime);
 
-    //graph
+    //graph data
     var chartData = {
         labels: time,
         datasets : [
@@ -86,17 +89,39 @@
         ]
     }
     var ctx = document.getElementById("lineChart").getContext('2d');
+
+    var kNearData = {
+        labels: time,
+        datasets : [
+            {
+                data: kNear,
+                fill: false,
+                backgroundColor: "rgb(255, 99, 132)",
+                borderColor: "rgb(255, 99, 132)"
+            }
+        ]
+    }
+    var ctx2 = document.getElementById("kNearChart").getContext('2d');
+
     var options = {
         scaleOverride : true,
         legendTemplate : "<% for (var i=0; i<datasets.length; i++){%><span style=\"background-color:<%=datasets[i].strokeColor%>\">&nbsp;&nbsp;&nbsp;</span>&nbsp;<%if(datasets[i].label){%><%=datasets[i].label%><%}%><br><%}%>"
     }
 
+    // create graph
     var lineChart = new Chart(ctx, {
             type: 'line',
             data: chartData,
             options: options
     });
 
+    var kNearChart = new Chart(ctx, {
+            type: 'line',
+            data: kNearData,
+            options: options
+    });
+
+    // Ajax
     setInterval(process, 10000);
     var i = 0;
     function process() {
@@ -125,8 +150,12 @@
                 lineChart.data.datasets[0]["data"].shift();
                 lineChart.data.datasets[1]["data"].push(response["minAcc"][i]);
                 lineChart.data.datasets[1]["data"].shift();
+
+                kNearChart.data.datasets[1]["data"].push(response["kNear"][i]);
+                kNearChart.data.datasets[1]["data"].shift();
             }
                 lineChart.update();
+                kNearChart.update();
 
 
         })
