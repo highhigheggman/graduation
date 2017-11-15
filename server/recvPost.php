@@ -24,21 +24,27 @@ try {
         )
     );
 
+    // calc k-near
     $cmd ='/home/b1014185/.pyenv/versions/anaconda3-4.1.1/bin//python /var/www/cgi-bin/k-nearest.py'.' '.(string)$maxAcc.' '.(string)$minAcc;
     exec($cmd, $out, $status);
-    print_r($out);
-    print_r($status);
+    $kNear = $out[0];
+
+    // check calc res
+    if(ctype_digit($kNear)) {
+        $kNear = 100;
+    }
 
     // insert data to DB
-    $stmt = $pdo->prepare('INSERT INTO acc_DB.sensorVal (deviceId, maxAcc, minAcc, sensorTime) VALUES(:deviceId, :maxAcc, :minAcc, :sensorTime)');
+    $stmt = $pdo->prepare('INSERT INTO acc_DB.sensorVal (deviceId, maxAcc, minAcc, kNear, sensorTime) VALUES(:deviceId, :maxAcc, :minAcc, :kNear, :sensorTime)');
     $stmt->bindValue(':deviceId', $deviceId, PDO::PARAM_INT);
     $stmt->bindValue(':maxAcc', $maxAcc, PDO::PARAM_STR);
     $stmt->bindValue(':minAcc', $minAcc, PDO::PARAM_STR);
+    $stmt->bindValue(':kNear', $kNear, PDO::PARAM_INT);
     $stmt->bindValue(':sensorTime', $sensorTime, PDO::PARAM_STR);
 
     $stmt->execute();
 
-    echo '[success]: ', $deviceId, ' ', $maxAcc, ' ', $minAcc, ' ', $sensorTime;
+    echo '[success]: ', $deviceId, ' ', $maxAcc, ' ', $minAcc, ' ', $kNear, ' ', $sensorTime;
 
 } catch (PDOException $e) {
     echo 'Connection failed: ' . $e->getMessage();
