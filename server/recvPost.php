@@ -30,7 +30,7 @@ try {
     $kNear = $out[0];
 
     // check calc res
-    if(ctype_digit($kNear)) {
+    if(!ctype_digit($kNear)) {
         $kNear = 100;
     }
 
