@@ -52,8 +52,8 @@
 <body>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
     <script src="./Chart.min.js"></script>
+    <canvas id="kNearChart" width="800" height="450"></canvas>
     <canvas id="lineChart" width="800" height="450"></canvas>
-    <canvas id="kNearChart" width="800" height="200"></canvas>
 
     <script>
 
