@@ -69,18 +69,6 @@
     document.writeln(upTime);
 
     //graph data
-    var kNearData = {
-        labels: time,
-        datasets : [
-            {
-                data: kNear,
-                fill: false,
-                backgroundColor: "rgb(255, 99, 132)",
-                borderColor: "rgb(255, 99, 132)"
-            }
-        ]
-    }
-    var ctx2 = document.getElementById("kNearChart").getContext('2d');
     var chartData = {
         labels: time,
         datasets : [
@@ -102,6 +90,18 @@
     }
     var ctx = document.getElementById("lineChart").getContext('2d');
 
+    var kNearData = {
+        labels: time,
+        datasets : [
+            {
+                data: kNear,
+                fill: false,
+                backgroundColor: "rgb(255, 99, 132)",
+                borderColor: "rgb(255, 99, 132)"
+            }
+        ]
+    }
+    var ctx2 = document.getElementById("kNearChart").getContext('2d');
 
     var options = {
         scaleOverride : true,
