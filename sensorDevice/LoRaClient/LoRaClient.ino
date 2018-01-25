@@ -95,7 +95,7 @@ void timerInterrupt() {
 
 void setup() {
     Serial.begin(9600);
-    while (!Serial) ; // Wait for serial port to be available
+    //while (!Serial) ; // Wait for serial port to be available
     if (!manager.init())
         Serial.println("init failed");
     // Defaults after init are 434.0MHz, 13dBm, Bw = 125 kHz, Cr = 4/5, Sf = 128chips/symbol, CRC on

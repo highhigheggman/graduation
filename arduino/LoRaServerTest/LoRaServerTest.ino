@@ -43,6 +43,8 @@ void setup()
 
     Console.print("Listening on frequency: ");
     Console.println(frequency);
+
+    pinMode(4, OUTPUT);
 }
 
 // Dont put this on the stack:
@@ -63,9 +65,13 @@ void loop()
             Console.println(buf);
             Console.print("RSSI: ");
             Console.println(driver.lastRssi(), DEC);
+            digitalWrite(4, HIGH);
+            delay(100);
 
             Console.println(buf);
 
+        }else{
+          digitalWrite(4, LOW);
         }
     }
 }

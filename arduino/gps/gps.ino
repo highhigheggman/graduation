@@ -4,11 +4,16 @@
 #include <RHReliableDatagram.h>
 #include <RH_RF95.h>
 #include <SPI.h>
+#include <DS3232RTC.h>    //http://github.com/JChristensen/DS3232RTC
+#include <Time.h>
+#include <TimeLib.h>         //http://www.arduino.cc/playground/Code/Time
+#include <Wire.h> //http://arduino.cc/en/Reference/Wire (included with Arduino IDE)
 
 #define CLIENT_ADDRESS 1
 #define SERVER_ADDRESS 2
 
 //-----------------gps--------------------
+SoftwareSerial ss(A1,A2);
 TinyGPSPlus gps;
 
 //-----------------LoRa-------------------
@@ -33,17 +38,28 @@ static void smartDelay(unsigned long ms)
     unsigned long start = millis();
 
     do {
-        while (Serial.available()) {
-            char c = Serial.read();
-            gps.encode(Serial.read());
-            Serial.write(c);
+        while (ss.available()) {
+            //char k = ss.read();
+            gps.encode(ss.read());
+            //Serial.print(k);
         }
     } while (millis() - start < ms);
-    Serial.println("***********");
+    //Serial.println();
+    //Serial.print("satellites:");
+    //Serial.println(gps.satellites.value());
 }
 
 void setup() {
     Serial.begin(9600);
+    ss.begin(9600);
+
+    // set system time using RTC
+    setSyncProvider(RTC.get);
+    if(timeStatus() != timeSet) {
+        Serial.println("Unable to sync with the RTC");
+    }else{
+        Serial.println("RTC has set the system time");
+    }
 
     if (!manager.init())
         Serial.println("init failed");
@@ -53,50 +69,75 @@ void setup() {
     driver.setFrequency(frequency);
     // Setup Power,dBm
     driver.setTxPower(tPower, false);
+    // Set Retries
+    //manager.setRetries(0);
+    manager.setTimeout(1000);
 }
 
 void loop() {
-
-    Serial.print("satellites:");
-    Serial.println(gps.satellites.value());
-
     if (true) {
         
-        char data[30];
-        char latGPS[10];
-        char lngGPS[10];
+        char data[20];
+        //char latGPS[10];
+        //char lngGPS[10];
         
-        dtostrf(gps.location.lng(), -9, 4, latGPS);
-        Serial.print(gps.location.lat());
-        Serial.print(" ");
-        Serial.println(latGPS);
-
-        dtostrf(gps.location.lng(), -9, 4, lngGPS);
-        Serial.print(gps.location.lng());
-        Serial.print(" ");
-        Serial.println(lngGPS);
-        
-        sprintf(data, "%s,%s,%d", latGPS, lngGPS, count);
-        Serial.println(data);
-        Serial.println();
-        
-        // check location
-        if (gps.location.isUpdated()) {
-            Serial.println("update");
-        }
+        //dtostrf(gps.location.lAT(), -9, 4, latGPS);
+        //dtostrf(gps.location.lng(), -9, 4, lngGPS);
+        //sprintf(data, "%s,%s,%d", latGPS, lngGPS, count);
 
         // send Data
-        Serial.println("Sending to rf95_reliable_datagram_server");
+        //Serial.println("Sending to rf95_reliable_datagram_server");
         if (manager.sendtoWait(data, sizeof(data), SERVER_ADDRESS)) {
+            Serial.print(gps.location.lat(), 6);
+            Serial.print(",");
+            Serial.print(gps.location.lng(), 6);
+            Serial.print(",");
+            Serial.print("1");
+            Serial.print(",");
+            Serial.print(driver.lastRssi(), DEC);
+            Serial.print(",");
+
+            Serial.print(year());
+            Serial.print("/");
+            Serial.print(month());
+            Serial.print("/");
+            Serial.print(day());
+            Serial.print(" ");
+            Serial.print(hour());
+            Serial.print(":");
+            Serial.print(minute());
+            Serial.print(":");
+            Serial.println(second());
+            
 
             // delay and update
-            smartDelay(10000);
+            smartDelay(4000);
 
         } else {
-            Serial.println("sendtoWait failed");
+            //Serial.println("sendtoWait failed");
+            Serial.print(gps.location.lat(), 6);
+            Serial.print(",");
+            Serial.print(gps.location.lng(), 6);
+            Serial.print(",");
+            Serial.print("0");
+            Serial.print(",");
+            Serial.print(driver.lastRssi(), DEC);
+            Serial.print(",");
+            
+            Serial.print(year());
+            Serial.print("/");
+            Serial.print(month());
+            Serial.print("/");
+            Serial.print(day());
+            Serial.print(" ");
+            Serial.print(hour());
+            Serial.print(":");
+            Serial.print(minute());
+            Serial.print(":");
+            Serial.println(second());
 
             // delay and update
-            smartDelay(5000);
+            smartDelay(4000);
         }
 
     } else {

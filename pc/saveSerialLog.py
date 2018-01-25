@@ -5,15 +5,24 @@ import serial
 import serial.tools.list_ports
 import time
 import subprocess
+import sys
+import re
 from operator import attrgetter
 
 def __main():
 
+    args = sys.argv
+
+    if len(args) != 2:
+        print('usage: python devPath')
+        sys.exit()
+
     # wait arduino bootup
     time.sleep(3.0)
 
-    # serial setting
+    # open Serial
     ser = serial.Serial(
+        port = args[1],
         baudrate = 9600,
         bytesize = serial.EIGHTBITS,
         parity = serial.PARITY_EVEN,
@@ -21,31 +30,20 @@ def __main():
         timeout = 1
     )
 
-    # get a list of ports
-    ser_ls = [i for i in serial.tools.list_ports.comports() if i.location is not None]
-
-    # sort by port location
-    ser_ls.sort(key=attrgetter('location'))
 
     while True:
-        for i in ser_ls:
-            ser.port = i.device
-            ser.open()
 
-            # wait data
-            while(ser.inWaiting() < 1):
-                time.sleep(0.1)
+        # wait data
+        while(ser.inWaiting() < 1):
+            time.sleep(0.1)
 
-            # read line
-            while True:
-                str = ser.readline().decode('utf-8').strip()
-                if num:
-                    break
+        #line = ser.readline().strip().decode('utf-8')
+        line = ser.readline()
+        print(line)
 
-            print(str)
-            print(datetime.datetime.now().strftime("%Y/%m/%d %H:%M:%S"))
+        subprocess.call('date', shell=True)
 
-            ser.close()
+    ser.close()
 
 
 if __name__ =='__main__':

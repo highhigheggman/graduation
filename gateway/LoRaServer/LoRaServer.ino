@@ -36,7 +36,7 @@ void setup()
     Serial.begin(9600);  
     Bridge.begin(BAUDRATE);
     Console.begin();
-    while (!Console) ; // Wait for console port to be available
+    //while (!Console) ; // Wait for console port to be available
     Console.println("Start Sketch");
     
     if (!manager.init())
@@ -48,8 +48,8 @@ void setup()
     // Setup Power,dBm
     driver.setTxPower(tPower, false);
 
-    Console.print("Listening on frequency: ");
-    Console.println(frequency);
+    //Console.print("Listening on frequency: ");
+    //Console.println(frequency);
 }
 
 // Dont put this on the stack:
@@ -64,18 +64,24 @@ void loop()
         uint8_t from;
         if (manager.recvfromAck(buf, &len, &from))
         {
-            Console.print("got request from : 0x");
-            Console.print(from, HEX);
-            Console.print(": ");
-            Console.println(buf);
-            Console.print("RSSI: ");
-            Console.println(driver.lastRssi(), DEC);
+            //Console.print("got request from : 0x");
+            //Console.print(from, HEX);
+            //Console.print(": ");
+            //Console.print(buf);
+            //Console.print("RSSI: ");
+            //Console.println(driver.lastRssi(), DEC);
 
             //split buf
             String maxAcc = String(strtok(buf, ","));
             maxAcc.trim();
             String minAcc = String(strtok(NULL , ","));
             minAcc.trim();
+
+            Console.print(maxAcc);
+            Console.print(",");
+            Console.print(minAcc);
+            Console.print(",");
+
 
             //get time
             if(!date.running()){
@@ -98,7 +104,7 @@ void loop()
               post.run();
 
               postRet = post.readString();
-              Console.println(postRet);
+              //Console.println(postRet);
             }
 
         }

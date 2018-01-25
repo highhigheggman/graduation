@@ -11,7 +11,6 @@ from scipy import signal
 from mpl_toolkits.mplot3d import Axes3D
 import numpy as np
 import pandas as pd
-import cv2
 
 def returnFileInt(path):
     base = os.path.basename(path)
@@ -54,53 +53,24 @@ def fft1d(data, frequency, outputPath):
     plt.rcParams['ytick.direction'] = 'in'
     plt.rcParams['xtick.major.width'] = 1.0
     plt.rcParams['ytick.major.width'] = 1.0
-    plt.rcParams['font.size'] = 30
+    plt.rcParams['font.size'] = 24
     plt.rcParams['axes.linewidth'] = 1.0
 
     plt.figure(1, figsize=(20,10))
-    #plt.subplot(211)
     plt.plot(freq[1:int(N/2)], np.abs(fftRes)[1:int(N/2)])
     plt.axis('tight')
     plt.xlim(0,15)
+    plt.ylim(0,0.06)
     plt.ylabel("amplitude")
     plt.xlabel("frequency[Hz]")
-    """
-    plt.subplot(212)
-    plt.plot(freq[1:int(N/2)], np.angle(fftRes)[1:int(N/2)]*180/np.pi)
-    plt.axis('tight')
-    plt.ylim(-180, 180)
-    plt.xlabel("frequency[Hz]")
-    plt.ylabel("phase[deg]")
 
-    plt.figure(2, figsize=(20,10))
-    plt.subplot(211)
-    plt.loglog(freq[1:int(N/2)], np.abs(fftRes)[1:int(N/2)])
-    plt.axis('tight')
-    plt.ylabel("amplitude")
-    plt.subplot(212)
-    plt.semilogx(freq[1:int(N/2)], np.degrees(np.angle(fftRes)[1:int(N/2)]))
-    plt.axis('tight')
-    plt.ylim(-180, 180)
-    plt.xlabel("frequency[Hz]")
-    plt.ylabel("phase[deg]")
-    """
     fig3, ax3 = plt.subplots(figsize=(20,10))
-    #plt.ylim([420, 540])
+    ax3.set_ylim(0.9, 1.2)
     dtSec = dt * 1000
     xAxis = [i*dtSec for i in range(N)]
-    ax3.plot(xAxis, medData)
+    ax3.plot(xAxis, data)
     plt.ylabel("[mv/g]")
     plt.xlabel("time[ms]")
-
-    """
-    fig4, ax4 = plt.subplots(figsize=(10,5))
-    dtSec = dt
-    xAxis = [i*dtSec for i in range(N)]
-    ax4.plot(xAxis, windowedData)
-    #plt.xlim([0, 10240])
-    plt.ylabel("[mv/g]")
-    plt.xlabel("time[sec]")
-    """
 
     plt.show()
 
@@ -173,7 +143,7 @@ def __main():
     # make base save file path
 
     # fft
-    fft1d(np.array(df['comAcc'])[0:2048], f, 'file')
+    fft1d(np.array(df['comAcc'][20000:22048]), f, 'file')
     #fft1d(np.array(df.iloc[[i for i in df.index if i%2==0]]['x'])[0:1024], f/2, 'file')
     #fft1d(np.array(df['y'])[0:2048], f, 'file')
     #fft1d(np.array(df['z']), f, 'file')
