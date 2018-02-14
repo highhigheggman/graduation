@@ -160,7 +160,7 @@ def __main():
     x5, y5 = m(lon1000, lat1000)
     x6, y6 = m(lon1500, lat1500)
     x7, y7 = m(lon2000, lat2000)
-    m.plot(x1, y1, color='blue', marker ='.', linestyle='None')
+    m.plot(x1, y1, color='yellow', marker ='.', linestyle='None')
     m.plot(x2, y2, color='black', marker ='.', linestyle='None')
     m.plot(x3, y3, color='red', marker ='.', markersize=18)
     m.plot(x4, y4, color='black')
